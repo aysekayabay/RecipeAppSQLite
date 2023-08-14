@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -21,10 +22,10 @@ import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.navigation.Navigation
 import java.io.ByteArrayOutputStream
-
+//jetpack room fw is better
 class RecipeFragment : Fragment() {
     lateinit var  saveButton : Button
-    lateinit var mealImage : ImageView
+    lateinit var mealImageView : ImageView
     lateinit var mealNameField : EditText
     lateinit var mealDetailField : EditText
     var selectedImage : Uri? = null
@@ -44,14 +45,50 @@ class RecipeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         saveButton = view.findViewById(R.id.saveDetailButton)
-        mealImage = view.findViewById(R.id.addMealImageView)
+        mealImageView = view.findViewById(R.id.addMealImageView)
         mealNameField = view.findViewById(R.id.mealNameField)
         mealDetailField = view.findViewById(R.id.mealDetailField)
         saveButton.setOnClickListener {
             saveDetail(it)
         }
-        mealImage.setOnClickListener {
+        mealImageView.setOnClickListener {
             selectImage(it)
+        }
+        arguments.let {
+            var isForAdding = RecipeFragmentArgs.fromBundle(it).isForAdding
+            if (isForAdding){
+                mealNameField.setText("")
+                mealDetailField.setText("")
+                saveButton.visibility= View.VISIBLE
+                val selectionImageBg = BitmapFactory.decodeResource(context?.resources, R.drawable.add_photo)
+                mealImageView.setImageBitmap(selectionImageBg)
+            }
+            else{
+                saveButton.visibility= View.INVISIBLE
+                val selectedId = RecipeFragmentArgs.fromBundle(it).id
+                context?.let {
+                    try {
+                        val db = it.openOrCreateDatabase("Meals", Context.MODE_PRIVATE, null)
+                        val cursor  = db.rawQuery("SELECT * FROM meals WHERE id = ?", arrayOf(selectedId.toString()))
+                        val mealNameIndex = cursor.getColumnIndex("mealName")
+                        val mealDetailIndex =  cursor.getColumnIndex("mealDetail")
+                        val mealImage = cursor.getColumnIndex("image")
+
+                        while (cursor.moveToNext()){
+                            mealNameField.setText(cursor.getString(mealNameIndex))
+                            mealDetailField.setText(cursor.getString(mealDetailIndex))
+                            val byteArray = cursor.getBlob(mealImage)
+                            val bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                            mealImageView.setImageBitmap(bitmap)
+                        }
+                        cursor.close()
+
+                    }catch (e:Exception){
+                        e.printStackTrace()
+                    }
+                }
+
+            }
         }
     }
 
@@ -125,11 +162,11 @@ class RecipeFragment : Fragment() {
                         if (Build.VERSION.SDK_INT >= 28 ){
                            val source = ImageDecoder.createSource(it.contentResolver,selectedImage!!)
                             selectedBitmap = ImageDecoder.decodeBitmap(source)
-                            mealImage.setImageBitmap(selectedBitmap)
+                            mealImageView.setImageBitmap(selectedBitmap)
                         }
                         else{
                             selectedBitmap = MediaStore.Images.Media.getBitmap(it.contentResolver, selectedImage)
-                            mealImage.setImageBitmap(selectedBitmap)
+                            mealImageView.setImageBitmap(selectedBitmap)
                         }
                     }
                 }

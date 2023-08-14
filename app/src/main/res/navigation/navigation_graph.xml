@@ -22,5 +22,11 @@
         <action
             android:id="@+id/action_recipeFragment_to_listFragment"
             app:destination="@id/listFragment" />
+        <argument
+            android:name="isForAdding"
+            app:argType="boolean" />
+        <argument
+            android:name="id"
+            app:argType="integer" />
     </fragment>
 </navigation>

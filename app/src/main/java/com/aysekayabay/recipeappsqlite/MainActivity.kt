@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.add_meal_item){
-            val action = ListFragmentDirections.actionListFragmentToRecipeFragment()
+            val action = ListFragmentDirections.actionListFragmentToRecipeFragment(true, 0)
             Navigation.findNavController(this, R.id.fragmentContainerView).navigate(action)
         }
         return super.onOptionsItemSelected(item)
